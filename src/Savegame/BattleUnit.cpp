@@ -1976,13 +1976,18 @@ void BattleUnit::prepareNewTurn(bool fullProcess)
 	_hitByFire = false;
 	_dontReselect = false;
 	_motionPoints = 0;
-
+	// revert to original faction
 	// don't give it back its TUs or anything this round
 	// because it's no longer a unit of the team getting TUs back
 	if (_faction != _originalFaction)
 	{
 		_faction = _originalFaction;
-		return;
+		if (Options::battleExtenedCivilians)
+		{ // Enabled "Extend civilians behaviour" by Xtendo-com. Don't exit from prepare turn operation for controled by player civilians
+			if (_originalFaction!=FACTION_NEUTRAL) return;
+		}
+		else // Disabled "Extend civilians behaviour" by Xtendo-com.
+			return;
 	}
 
 	// transition between stages, don't do damage or panic
@@ -3127,8 +3132,11 @@ int BattleUnit::getMoveSound() const
  */
 bool BattleUnit::isWoundable() const
 {
-	return !_armor->getBleedImmune(!(_type=="SOLDIER" || (Options::alienBleeding && _originalFaction != FACTION_PLAYER)));
-}
+	//return !_armor->getBleedImmune(!(_type=="SOLDIER" || (Options::alienBleeding && _originalFaction != FACTION_PLAYER)));
+	return !_armor->getBleedImmune(
+			!(_type=="SOLDIER" || (Options::alienBleeding && _originalFaction != FACTION_PLAYER) || 
+			(Options::battleExtenedCivilians && _originalFaction == FACTION_NEUTRAL)));
+} 
 
 /**
  * Get whether the unit is affected by morale loss.

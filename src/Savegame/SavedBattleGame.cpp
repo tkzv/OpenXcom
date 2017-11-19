@@ -975,11 +975,25 @@ void SavedBattleGame::endTurn()
 		if (_selectedUnit && _selectedUnit->getOriginalFaction() == FACTION_PLAYER)
 			_lastSelectedUnit = _selectedUnit;
 		_selectedUnit =  0;
-		_side = FACTION_HOSTILE;
+		if (Options::battleExtenedCivilians) 
+		{ 
+			_side = FACTION_NEUTRAL; //Give next turn to civilians instead of aliens
+		}
+		else 
+		{
+			_side = FACTION_HOSTILE;
+		}
 	}
 	else if (_side == FACTION_HOSTILE)
 	{
-		_side = FACTION_NEUTRAL;
+		if (Options::battleExtenedCivilians) 
+		{
+			_side = FACTION_PLAYER; //Give next to player instead of civilians
+		}
+		else
+		{
+			_side = FACTION_NEUTRAL;
+		}
 		// if there is no neutral team, we skip this and instantly prepare the new turn for the player
 		if (selectNextPlayerUnit() == 0)
 		{
@@ -998,7 +1012,14 @@ void SavedBattleGame::endTurn()
 	{
 		prepareNewTurn();
 		_turn++;
-		_side = FACTION_PLAYER;
+		if (Options::battleExtenedCivilians) 
+		{
+			_side = FACTION_HOSTILE; //Give next turn to aliens instead of player
+		}
+		else
+		{
+			_side = FACTION_PLAYER;
+		}
 		if (_lastSelectedUnit && _lastSelectedUnit->isSelectable(FACTION_PLAYER, false, false))
 			_selectedUnit = _lastSelectedUnit;
 		else
@@ -1064,6 +1085,65 @@ void SavedBattleGame::endTurn()
 
 		work.execute(item->getRules()->getScript<ModScript::NewTurnItem>(), arg);
 	}
+
+	
+	if (Options::battleExtenedCivilians) // From "Extend civilians behaviour" by Xtendo-com.
+	{// Manual control of civilians by yrizoud
+		for (std::vector<BattleUnit*>::iterator i = getUnits()->begin(); i != getUnits()->end(); ++i)
+		{ //find civilian from array of units
+			if ((*i)->getOriginalFaction() != FACTION_NEUTRAL || (*i)->isOut())
+				continue; //skip unit if not civilian
+			Position origin = (*i)->getPosition(); //get X,Y,Z coordinats of civilian
+			Position originVoxel = getTileEngine()->getSightOriginVoxel(*i);
+			originVoxel.z -= 4;
+
+			for (std::vector<BattleUnit*>::const_iterator j = getUnits()->begin(); j != getUnits()->end(); ++j)
+			{//find x-com operative from array of units
+				if ( (*j)->isOut() || (*j)->getFaction() != FACTION_PLAYER || (*j)->getOriginalFaction() != FACTION_PLAYER )
+					continue; //skip unit if not x-com operative
+				if ( ((*j)->getStatus() == STATUS_BERSERK || (*j)->getStatus() == STATUS_PANICKING))
+					continue; //skip if x-com operative panicked in that turn
+				Position target = (*j)->getPosition(); //get X,Y,Z coordinats of x-com operative
+
+				//check for distance from x-com operative to civilian, but do not care about obstacles like walls
+				const int horiz_dist = 8; //X and Y distance
+				const int vert_dist = 2;  //Z distance
+				if (target.x >= origin.x - horiz_dist && target.x <= origin.x + horiz_dist
+				&&  target.y >= origin.y - horiz_dist && target.y <= origin.y + horiz_dist
+				&&  target.z >= origin.z - vert_dist  && target.z <= origin.z + vert_dist)
+				{
+					Position dummy;
+					//check for visability from x-com to civilian (check for obstacles like walls)
+					if (getTileEngine()->visible((*i), (*j)->getTile()))
+					{
+						// if passed distance and visability check
+						// get control of civilian like you use a mind-control
+						(*i)->convertToFaction(FACTION_PLAYER);
+						getTileEngine()->calculateFOV(origin);
+						//getTileEngine()->calculateUnitLighting(); // can't use, it's private now
+						(*i)->setTimeUnits((*i)->getBaseStats()->tu);
+						(*i)->setEnergy((*i)->getBaseStats()->stamina);
+						//(*i)->recoverTimeUnits(); //don't use, freezes game after civilian move
+						(*i)->allowReselect();
+						// civilian will not panic if x-com operative is two tile away and in the same floor
+						if (target.x >= origin.x - 2 && target.x <= origin.x + 2
+						&&  target.y >= origin.y - 2 && target.y <= origin.y + 2
+						&&  target.z >= origin.z - 1 && target.z <= origin.z + 1)
+						{
+							if ((*i)->getStatus() == STATUS_PANICKING || (*i)->getStatus() == STATUS_BERSERK) (*i)->abortTurn(); // _status = STATUS_STANDING;
+						}
+						continue;
+					// Another way to check visibility is to calculate shoot trajectory in voxel world
+					// but this fails when an other civilian is in the way
+					// || getTileEngine()->canTargetUnit(&originVoxel, (*j)->getTile(), &dummy, *i, *j))
+					}
+				}
+			}
+		}
+	}
+	//--
+
+
 
 	// re-run calculateFOV() *after* all aliens have been set not-visible
 	_tileEngine->recalculateFOV();
