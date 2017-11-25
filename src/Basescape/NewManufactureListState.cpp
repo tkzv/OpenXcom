@@ -327,7 +327,7 @@ void NewManufactureListState::btnMarkAllAsSeenClick(Action *)
 void NewManufactureListState::fillProductionList(bool refreshCategories)
 {
 	std::wstring searchString = _btnQuickSearch->getText();
-	for (auto & c : searchString) c = towupper(c);
+	for (auto & c : searchString) c = toupper(c, std::locale(""));
 
 	if (refreshCategories)
 	{
@@ -375,7 +375,7 @@ void NewManufactureListState::fillProductionList(bool refreshCategories)
 			if (searchString != L"")
 			{
 				std::wstring projectName = tr((*it)->getName());
-				for (auto & c : projectName) c = towupper(c);
+				for (auto & c : projectName) c = toupper(c, std::locale(""));
 				if (projectName.find(searchString) == std::string::npos)
 				{
 					continue;

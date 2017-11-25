@@ -282,7 +282,7 @@ void CraftEquipmentState::btnQuickSearchApply(Action *)
 void CraftEquipmentState::initList()
 {
 	std::wstring searchString = _btnQuickSearch->getText();
-	for (auto & c : searchString) c = towupper(c);
+	for (auto & c : searchString) c = toupper(c, std::locale(""));
 
 	size_t selIdx = _cbxFilterBy->getSelected();
 	if (selIdx == (size_t)-1)
@@ -342,7 +342,7 @@ void CraftEquipmentState::initList()
 		if (searchString != L"")
 		{
 			std::wstring projectName = tr((*i));
-			for (auto & c : projectName) c = towupper(c);
+			for (auto & c : projectName) c = toupper(c, std::locale(""));
 			if (projectName.find(searchString) == std::string::npos)
 			{
 				continue;

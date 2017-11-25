@@ -438,7 +438,7 @@ void SellState::btnQuickSearchApply(Action *)
 void SellState::updateList()
 {
 	std::wstring searchString = _btnQuickSearch->getText();
-	for (auto & c : searchString) c = towupper(c);
+	for (auto & c : searchString) c = toupper(c, std::locale(""));
 
 	_lstItems->clearList();
 	_rows.clear();
@@ -465,7 +465,7 @@ void SellState::updateList()
 		if (searchString != L"")
 		{
 			std::wstring projectName = _items[i].name;
-			for (auto & c : projectName) c = towupper(c);
+			for (auto & c : projectName) c = toupper(c, std::locale(""));
 			if (projectName.find(searchString) == std::string::npos)
 			{
 				continue;

@@ -204,7 +204,7 @@ void NewResearchListState::btnMarkAllAsSeenClick(Action *)
 void NewResearchListState::fillProjectList(bool markAllAsSeen)
 {
 	std::wstring searchString = _btnQuickSearch->getText();
-	for (auto & c : searchString) c = towupper(c);
+	for (auto & c : searchString) c = toupper(c, std::locale(""));
 
 	_projects.clear();
 	_lstResearch->clearList();
@@ -229,7 +229,7 @@ void NewResearchListState::fillProjectList(bool markAllAsSeen)
 		if (searchString != L"")
 		{
 			std::wstring projectName = tr((*it)->getName());
-			for (auto & c : projectName) c = towupper(c);
+			for (auto & c : projectName) c = toupper(c, std::locale(""));
 			if (projectName.find(searchString) == std::string::npos)
 			{
 				it = _projects.erase(it);

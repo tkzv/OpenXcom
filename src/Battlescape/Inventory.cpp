@@ -574,7 +574,7 @@ void Inventory::setSelectedItem(BattleItem *item)
 void Inventory::setSearchString(const std::wstring &searchString)
 {
 	_searchString = searchString;
-	for (auto & c : _searchString) c = towupper(c);
+	for (auto & c : _searchString) c = toupper(c, std::locale(""));
 	arrangeGround(true);
 }
 
@@ -1164,6 +1164,17 @@ bool Inventory::unload()
 }
 
 /**
+* Converts character to uppercase by the system locale rules rather than "C".
+* For use in iterators.
+* @param c The character to convert.
+* @return The uppercase character.
+*/ 
+wchar_t Inventory::upCase(wchar_t c)
+{
+	return std::toupper(c, std::locale(""));
+}
+
+/**
 * Checks whether the given item is visible with the current search string.
 * @param item The item to check.
 * @return True if item should be shown. False otherwise.
@@ -1186,7 +1197,7 @@ bool Inventory::isInSearchString(BattleItem *item)
 	{
 		itemLocalName = _game->getLanguage()->getString(item->getRules()->getName());
 	}
-	std::transform(itemLocalName.begin(), itemLocalName.end(), itemLocalName.begin(), towupper);
+	std::transform(itemLocalName.begin(), itemLocalName.end(), itemLocalName.begin(), upCase);
 	if (itemLocalName.find(_searchString) != std::wstring::npos)
 	{
 		// Name match.
@@ -1201,7 +1212,7 @@ bool Inventory::isInSearchString(BattleItem *item)
 		for (std::vector<std::string>::iterator i = itemCategories.begin(); i != itemCategories.end(); ++i)
 		{
 			std::wstring catLocalName = _game->getLanguage()->getString((*i));
-			std::transform(catLocalName.begin(), catLocalName.end(), catLocalName.begin(), towupper);
+			std::transform(catLocalName.begin(), catLocalName.end(), catLocalName.begin(), upCase);
 			if (catLocalName.find(_searchString) != std::wstring::npos)
 			{
 				// Category match
@@ -1217,7 +1228,7 @@ bool Inventory::isInSearchString(BattleItem *item)
 				for (std::vector<std::string>::iterator i = itemAmmoCategories.begin(); i != itemAmmoCategories.end(); ++i)
 				{
 					std::wstring catLocalName = _game->getLanguage()->getString((*i));
-					std::transform(catLocalName.begin(), catLocalName.end(), catLocalName.begin(), towupper);
+					std::transform(catLocalName.begin(), catLocalName.end(), catLocalName.begin(), upCase);
 					if (catLocalName.find(_searchString) != std::wstring::npos)
 					{
 						// Category match

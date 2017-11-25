@@ -239,7 +239,7 @@ void StoresState::btnQuickSearchApply(Action *)
 void StoresState::initList(bool grandTotal)
 {
 	std::wstring searchString = _btnQuickSearch->getText();
-	for (auto & c : searchString) c = towupper(c);
+	for (auto & c : searchString) c = toupper(c, std::locale(""));
 
 	// clear everything
 	_lstStores->clearList();
@@ -247,13 +247,14 @@ void StoresState::initList(bool grandTotal)
 
 	// find relevant items
 	const std::vector<std::string> &items = _game->getMod()->getItemsList();
+
 	for (std::vector<std::string>::const_iterator item = items.begin(); item != items.end(); ++item)
 	{
 		// quick search
 		if (searchString != L"")
 		{
 			std::wstring projectName = tr((*item));
-			for (auto & c : projectName) c = towupper(c);
+			for (auto & c : projectName) c = toupper(c, std::locale(""));
 			if (projectName.find(searchString) == std::string::npos)
 			{
 				continue;
